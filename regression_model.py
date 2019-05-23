@@ -5,21 +5,21 @@ from linearRegression import linearRegression as Model
 # x_train으로 넣어 줄 것 : image
 # train에서, DenseNet과 같은 classification reg_model의 feature를 거친다. 1000 정도,,로 출력을 뽑아와서,, 배치로 처리하기.
 
-x_train = torch.randn(10,3,224,224)
-y_train = torch.randn(10,5)
+x_train = torch.randn(100,3,224,224).cuda()
+y_train = torch.randn(100,5).cuda()
 
 
 inputDim = 1000
 outputDim = 5
-learningRate = 0.01
+learningRate = 0.001
 epochs = 100
 
 reg_model = Model(inputDim, outputDim)
 densenet = models.densenet121(pretrained=True)
-
 cuda = 0
 if torch.cuda.is_available():
     reg_model.cuda()
+    densenet.cuda()
     cuda = 1
 
 criterion = torch.nn.MSELoss()
@@ -38,5 +38,6 @@ for epoch in range(epochs):
 
 with torch.no_grad():
     reg_model.eval()
-    predicted = reg_model(x_train)
+    x_feature = densenet(x_train).cuda()
+    predicted = reg_model(x_feature)
     print(predicted)
