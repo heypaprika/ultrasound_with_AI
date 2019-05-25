@@ -1,0 +1,6 @@
+.idea/
+__pycache__/
+bin/
+lib/
+pip-selfcheck.json
+pyvenv.cfg
