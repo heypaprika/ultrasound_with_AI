@@ -5,8 +5,16 @@ from linearRegression import linearRegression as Model
 # x_train으로 넣어 줄 것 : image
 # train에서, DenseNet과 같은 classification reg_model의 feature를 거친다. 1000 정도,,로 출력을 뽑아와서,, 배치로 처리하기.
 
-x_train = torch.randn(100,3,224,224).cuda()
-y_train = torch.randn(100,5).cuda()
+#dataset가져와서
+if torch.cuda.is_available():
+    x_train = torch.randn(100,3,224,224).cuda()
+    y_train = torch.randn(100,5).cuda()
+else:
+    x_train = torch.randn(100,3,224,224)
+    y_train = torch.randn(100,5)
+
+#dataloader에 넣어주기.
+Train_Loader = torch.utils.data.DataLoader(x_train, )
 
 
 inputDim = 1000
