@@ -31,30 +31,56 @@
 
 ## File example
 
+하단의 snippet은 해당 모델을 training하는 소스입니다.
 
 ```python3
-// Create a Pipeline - this serves as a top-level API for streaming and processing frames
-rs2::pipeline p;
+import torch
+import torchvision.models as models
+from linearRegression import linearRegression as Model
+from dataset.ultrasound import Ultrasound_Dataset_for_dump as Dataset_dump
+from dataset.ultrasound import Ultrasound_Dataset as Dataset
 
-// Configure and start the pipeline
-p.start();
+x_train = torch.randn(100,3,224,224)
+y_train = torch.randn(100,5)
 
-while (true)
-{
-    // Block program until frames arrive
-    rs2::frameset frames = p.wait_for_frames();
+#dataloader에 넣어주기.
+Train_Dataset = Dataset_dump(x_train, y_train)
+Train_Loader = torch.utils.data.DataLoader(Train_Dataset) # + 나머지 option들
 
-    // Try to get a frame of a depth image
-    rs2::depth_frame depth = frames.get_depth_frame();
 
-    // Get the depth frame's dimensions
-    float width = depth.get_width();
-    float height = depth.get_height();
+inputDim = 1000
+outputDim = 5
+learningRate = 0.001
+epochs = 100
 
-    // Query the distance from the camera to the object in the center of the image
-    float dist_to_center = depth.get_distance(width / 2, height / 2);
+reg_model = Model(inputDim, outputDim)
+densenet = models.densenet121(pretrained=True)
+cuda = 0
+if torch.cuda.is_available():
+    reg_model.cuda()
+    densenet.cuda()
+    cuda = 1
 
-    // Print the distance
-    std::cout << "The camera is facing an object " << dist_to_center << " meters away \r";
-}
+criterion = torch.nn.MSELoss()
+optimizer = torch.optim.SGD(reg_model.parameters(),lr=learningRate)
+
+reg_model.train()
+for epoch in range(epochs):
+    for ind, (x_train, y_train) in enumerate(Train_Loader):
+
+        optimizer.zero_grad()
+        x_feature = densenet(x_train.cuda())
+        outputs = reg_model(x_feature)
+        loss = criterion(outputs, y_train.cuda())
+        # print(loss)
+        loss.backward()
+        optimizer.step()
+    print('epoch {}, loss {}'.format(epoch, loss.item()))
+
+with torch.no_grad():
+    reg_model.eval()
+    x_feature = densenet(x_train).cuda()
+    predicted = reg_model(x_feature)
+    print(predicted)
+
 ```
